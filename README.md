@@ -4,26 +4,26 @@
 
 ## Status
 
-**v0.7 (final pass in this series).** Two "museum guide" features: a **Guided Tour** that
-auto-cycles through nine curated π values with cinematic pacing (real π → 2 → 22/7 → φ → 10 →
-2+3i → 100 → ∞ → back to real π), and an **Ambient Tone** toggle that sonifies the current
-reality's stability meter through a Web Audio oscillator — calmer and lower when π is close to
-real, tenser and higher as it destabilizes. Both are entirely opt-in.
+**v0.8 — critical rendering bug fix.** A user reported that Circles & Spheres, Earth & Orbit,
+Black Holes, and Transportation all crashed on load with `pValues.flat is not a function`,
+falling back to the "This exhibit couldn't render" error boundary message. Root cause:
+`generateRingOutline()` returned a `THREE.BufferGeometry`, and every one of those four
+exhibits fed drei's `<Line points={...}>` the raw `.attributes.position.array` — a
+`Float32Array`, which has no `.flat()` method. drei's `<Line>` expects a plain array of
+points (or `Vector3[]`), not a typed array. Fixed by having `generateRingOutline()` return
+the point array directly instead of wrapping it in a `BufferGeometry` (it was building that
+exact array internally the whole time — the bug was purely in what got returned). Added 4
+regression tests locking in the correct return shape so this can't silently reappear.
 
-This pass also did a real bug sweep: `npm run lint` was referenced in `package.json` but had
-**no ESLint config at all** — running it failed outright. Added a working flat config, fixed a
-peer-dependency conflict (`eslint-plugin-react-hooks` didn't support ESLint 9), and then
-actually ran it: 78 errors and 12 warnings surfaced. Most were false positives from
-react-three-fiber's custom JSX properties (`intensity`, `args`, `position` aren't real DOM
-attributes, which a generic React linter doesn't know) and have been explicitly suppressed
-with a comment explaining why. The genuine issues — unused imports/variables in 5 exhibit
-files, a stale eslint-disable comment, and a `useMemo` dependency that referenced a
-freshly-created object on every render (silently defeating its own memoization) — were
-actually fixed, not suppressed. `npm run lint` now passes clean.
+Two more real bugs surfaced in the same error log and are also fixed: a React style-mixing
+warning (`border` shorthand and `borderColor` longhand set on the same element across
+re-renders) in `ExhibitFrame` and `AmbientToneToggle`, and an `AudioContext` double-close
+crash in `AmbientToneToggle` — toggling the ambient tone off triggered both the effect's own
+cleanup and a redundant manual-close branch, the second of which tried to close an
+already-closed context. All three fixes are described in detail in Known Issues below.
 
-14 exhibits, 57 tests, 0 lint errors. Two more exhibits (DNA & Cells, Black Holes) were also
-retrofitted with the `ExhibitFrame` accessibility pattern this pass, bringing the total to 7
-of 14 exhibits with the Visual/Data-view toggle.
+61 tests pass (up from 57 — 4 new regression tests for the Line/BufferGeometry bug). 14
+exhibits, clean lint, clean build.
 
 ## Vision
 
@@ -38,7 +38,7 @@ npm install
 npm run dev       # http://localhost:5173
 npm run build      # production build to /dist
 npm run preview    # preview the production build
-npm test           # run the Vitest suite (57 tests)
+npm test           # run the Vitest suite (61 tests)
 npm run lint        # ESLint (0 errors as of this pass)
 ```
 
@@ -178,6 +178,21 @@ dual-licensing exhibit content (CC BY-NC) separately from code.
 
 ## Bugs & Known Issues
 
+- ~~`generateRingOutline` returned a `BufferGeometry`; exhibits fed drei's `<Line>` a raw
+  `Float32Array` via `.attributes.position.array`, which crashed with `pValues.flat is not a
+  function`~~ — **fixed**. This broke 4 of 14 exhibits (Circles & Spheres, Earth & Orbit,
+  Black Holes, Transportation) — anyone hitting those would see the generic
+  `CanvasErrorBoundary` fallback message instead of the exhibit. `generateRingOutline` now
+  returns a plain `Vector3[]`, which is what drei's `<Line points={...}>` actually expects.
+  4 regression tests added (`generateCircle.test.js`) to lock in the correct return shape.
+- ~~Mixed `border`/`borderColor` on the same element across re-renders (React style-mixing
+  warning)~~ — **fixed** in `ExhibitFrame.jsx` and `AmbientToneToggle.jsx`; the "active" style
+  variant now overrides the full `border` shorthand instead of just `borderColor`.
+- ~~`AudioContext` double-close crash in `AmbientToneToggle`~~ — **fixed**. Turning the ambient
+  tone off triggered both the effect's own cleanup (which closed the context) and a redundant
+  manual-close branch in the next effect run (which tried to close the same context again).
+  Teardown now happens in exactly one place — the effect's cleanup function.
+
 - ~~Optics, Manufacturing, Transportation exhibits missing~~ — fixed; all three now exist and
   use the formula library that was previously unused (`Optics.*`, `Engineering.pipeFlowArea`,
   `Engineering.boltThreadHelixLength`).
@@ -202,7 +217,7 @@ dual-licensing exhibit content (CC BY-NC) separately from code.
   demonstration, not a physically simulated rigid body — the "bump/skid" is implied by the
   shape mismatch, not computed from contact-point physics.
 - Component-level tests (React Testing Library) still don't exist — only the pure-function
-  engine layer has test coverage (57 tests). Tour Mode and Ambient Tone (both new this pass)
+  engine layer has test coverage (61 tests). Tour Mode and Ambient Tone (both new this pass)
   have no tests at all yet — they're UI-effect-heavy (timers, Web Audio) rather than pure
   functions, so they'd need component tests with fake timers/mocked AudioContext, not more
   unit tests of the existing kind.
@@ -243,7 +258,7 @@ dual-licensing exhibit content (CC BY-NC) separately from code.
 **Medium Priority**
 - ~~Adaptive LOD~~ — done for the sphere-heavy exhibits; extend to remaining point-based ones.
 - ~~Achievement gallery + more achievements + share links~~ — done.
-- ~~Unit test suite~~ — done (57 tests); component/rendering tests still open.
+- ~~Unit test suite~~ — done (61 tests); component/rendering tests still open.
 - ~~Working lint setup~~ — done; `npm run lint` had no config at all before this pass and now
   runs clean.
 

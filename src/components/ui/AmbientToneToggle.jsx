@@ -16,14 +16,7 @@ export default function AmbientToneToggle() {
   const gainRef = useRef(null);
 
   useEffect(() => {
-    if (!enabled) {
-      if (ctxRef.current) {
-        oscRef.current?.stop();
-        ctxRef.current.close();
-        ctxRef.current = null;
-      }
-      return undefined;
-    }
+    if (!enabled) return undefined;
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return undefined;
@@ -40,9 +33,17 @@ export default function AmbientToneToggle() {
     oscRef.current = osc;
     gainRef.current = gain;
 
+    // This cleanup is the ONLY place teardown happens — it runs both when
+    // `enabled` flips back to false and on unmount. A previous version also
+    // tried to close the context again in a separate `!enabled` branch,
+    // which ran after this cleanup and crashed with "Cannot close a closed
+    // AudioContext" since the context was already closed by then.
     return () => {
       osc.stop();
       ctx.close();
+      ctxRef.current = null;
+      oscRef.current = null;
+      gainRef.current = null;
     };
   }, [enabled]);
 
@@ -73,5 +74,5 @@ const styles = {
     padding: '8px 14px', borderRadius: '999px', fontSize: '13px',
     border: '1px solid var(--border-glass)', background: 'transparent', color: 'var(--text-secondary)',
   },
-  btnActive: { background: 'var(--accent)', color: '#0a0a10', borderColor: 'var(--accent)' },
+  btnActive: { background: 'var(--accent)', color: '#0a0a10', border: '1px solid var(--accent)' },
 };

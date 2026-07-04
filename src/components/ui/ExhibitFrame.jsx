@@ -74,6 +74,6 @@ const styles = {
     padding: '5px 10px', fontSize: '11px', borderRadius: '999px',
     border: '1px solid var(--border-glass)', background: 'transparent', color: 'var(--text-secondary)',
   },
-  toggleBtnActive: { background: 'var(--accent)', color: '#0a0a10', borderColor: 'var(--accent)' },
+  toggleBtnActive: { background: 'var(--accent)', color: '#0a0a10', border: '1px solid var(--accent)' },
   dataViewWrap: { height: '100%', overflowY: 'auto', padding: '16px 20px' },
 };

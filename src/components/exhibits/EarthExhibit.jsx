@@ -27,7 +27,7 @@ function Planet({ p }) {
 
 function OrbitRing({ p }) {
   const points = useMemo(() => generateRingOutline(2.8, p, 200), [p]);
-  return <Line points={points.attributes.position.array} color="#ffb37c" lineWidth={1} transparent opacity={0.6} />;
+  return <Line points={points} color="#ffb37c" lineWidth={1} transparent opacity={0.6} />;
 }
 
 export default function EarthExhibit() {

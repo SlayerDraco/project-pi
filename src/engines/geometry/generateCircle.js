@@ -69,8 +69,12 @@ export function generateCircleGeometry(radius, p, segments = 128) {
 }
 
 /**
- * Builds a ring outline (line loop) so users can visually see the
- * "gap" or "overlap" when p != π — the ring won't close perfectly.
+ * Builds a ring outline as an array of THREE.Vector3 points, so users can
+ * visually see the "gap" or "overlap" when p != π — the ring won't close
+ * perfectly. Returns a plain point array (not a BufferGeometry) because
+ * every current consumer feeds this directly into drei's <Line points={...}>,
+ * which expects an array of points/Vector3s — not a raw Float32Array (which
+ * has no .flat() method and crashes drei's internal normalization).
  */
 export function generateRingOutline(radius, p, segments = 128) {
   p = safePi(p);
@@ -80,7 +84,7 @@ export function generateRingOutline(radius, p, segments = 128) {
     const theta = (turn * i) / segments;
     points.push(new THREE.Vector3(radius * Math.cos(theta), radius * Math.sin(theta), 0));
   }
-  return new THREE.BufferGeometry().setFromPoints(points);
+  return points;
 }
 
 /**

@@ -41,7 +41,7 @@ function RollingWheel({ p }) {
       <mesh geometry={geo}>
         <meshStandardMaterial color="#7c9eff" side={2} />
       </mesh>
-      <Line points={outline.attributes.position.array} color="#ffffff" lineWidth={1.5} />
+      <Line points={outline} color="#ffffff" lineWidth={1.5} />
     </group>
   );
 }

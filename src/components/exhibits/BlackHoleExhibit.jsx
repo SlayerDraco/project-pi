@@ -25,17 +25,7 @@ function EventHorizon({ p }) {
 
 function PhotonSphere({ p }) {
   const ring = useMemo(() => generateRingOutline(SCHWARZSCHILD_DISPLAY_RADIUS * 1.5, p, 200), [p]);
-  
-  return (
-    <Line 
-      // Wrap the array here
-      points={Array.from(ring.attributes.position.array)} 
-      color="#ffb37c" 
-      lineWidth={1.5} 
-      transparent 
-      opacity={0.75} 
-    />
-  );
+  return <Line points={ring} color="#ffb37c" lineWidth={1.5} transparent opacity={0.75} />;
 }
 
 export default function BlackHoleExhibit() {
