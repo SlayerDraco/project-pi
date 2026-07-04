@@ -14,15 +14,22 @@ const RADIUS = 1.6;
 function CircleMesh({ p }) {
   const geo = useMemo(() => generateCircleGeometry(RADIUS, p), [p]);
   const ring = useMemo(() => generateRingOutline(RADIUS, p), [p]);
+  
   return (
     <group>
       <mesh geometry={geo}>
         <meshStandardMaterial color="#7c9eff" side={2} transparent opacity={0.55} />
       </mesh>
-      <Line points={ring.attributes.position.array} color="#ffffff" lineWidth={1.5} />
+      <Line 
+        // Wrap the array here
+        points={Array.from(ring.attributes.position.array)} 
+        color="#ffffff" 
+        lineWidth={1.5} 
+      />
     </group>
   );
 }
+
 
 function SphereMesh({ p }) {
   const geo = useMemo(() => generateSphereGeometry(RADIUS, p, adaptiveSegments(p, 48), adaptiveSegments(p, 32)), [p]);
