@@ -8,6 +8,7 @@ import DataTable from '../ui/DataTable.jsx';
 import { generateSphereGeometry, generateRingOutline, adaptiveSegments } from '../../engines/geometry/generateCircle.js';
 import { Astronomy } from '../../engines/math/formulas.js';
 import { REAL_PI } from '../../engines/math/parser.js';
+import { StatGrid, StatCard, VerdictBanner } from '../ui/StatCard.jsx';
 
 const EARTH_RADIUS_KM = 6371;
 const DISPLAY_RADIUS = 1.6;
@@ -67,38 +68,24 @@ export default function EarthExhibit() {
         </ExhibitFrame>
       </div>
 
-      <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>Earth &amp; Orbit</h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-          V = (4/3)·p·r³ &nbsp;·&nbsp; T = 2p·√(a³/GM)
-        </p>
-        <Row label="Planet Volume vs. real Earth" value={`${(volumeRatio * 100).toFixed(1)}%`} />
-        <Row label="Year Length" value={`${orbitPeriodDays.toFixed(1)} days`} />
-        <Row label="Real-Earth Year" value={`${realOrbitDays.toFixed(1)} days`} />
-        <div style={{
-          marginTop: '6px', padding: '12px 14px', borderRadius: 'var(--radius-sm)',
-          background: survivable ? 'rgba(107,255,176,0.08)' : 'rgba(255,107,107,0.08)',
-          border: `1px solid ${survivable ? 'rgba(107,255,176,0.3)' : 'rgba(255,107,107,0.3)'}`,
-        }}>
-          <strong style={{ fontSize: '13px', color: survivable ? 'var(--success)' : 'var(--danger)' }}>
-            {survivable ? '✓ Plausibly survivable' : '✕ Our universe would not survive this'}
-          </strong>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '6px 0 0' }}>
-            {survivable
-              ? 'Orbital mechanics and planetary volume stay within a range where a self-consistent alternate universe could plausibly evolve similar structures.'
-              : 'At this deviation, orbital periods, planetary density, and structural geometry diverge so far from real Earth that Earth-like planets and stable orbits become mathematically implausible in a universe built on our physical constants.'}
+      <div className="glass" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <h3 className="display" style={{ margin: 0, fontSize: '19px' }}>🌍 Earth &amp; Orbit</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
+            V = (4/3)·p·r³ &nbsp;·&nbsp; T = 2p·√(a³/GM)
           </p>
         </div>
+        <StatGrid>
+          <StatCard icon="🪐" label="Planet volume" value={`${(volumeRatio * 100).toFixed(0)}%`} sub="vs. real Earth" />
+          <StatCard icon="📅" label="Year length" value={orbitPeriodDays.toFixed(1)} unit="days" />
+          <StatCard icon="🔁" label="Real Earth year" value={realOrbitDays.toFixed(1)} unit="days" />
+        </StatGrid>
+        <VerdictBanner good={survivable} title={survivable ? 'Plausibly survivable' : 'Our universe would not survive this'}>
+          {survivable
+            ? 'Orbital mechanics and planetary volume stay within a range where a self-consistent alternate universe could plausibly evolve similar structures.'
+            : 'At this deviation, orbital periods, planetary density, and structural geometry diverge so far from real Earth that Earth-like planets and stable orbits become mathematically implausible in a universe built on our physical constants.'}
+        </VerdictBanner>
       </div>
     </section>
-  );
-}
-
-function Row({ label, value }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-      <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span style={{ fontFamily: 'monospace' }}>{value}</span>
-    </div>
   );
 }

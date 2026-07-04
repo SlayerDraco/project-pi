@@ -78,7 +78,7 @@ export default function MedicineExhibit() {
       </div>
 
       <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>Medicine: Eyes &amp; Lungs</h3>
+        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>👁️ Medicine: Eyes &amp; Lungs</h3>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
           Iris aperture = p·r² &nbsp;·&nbsp; Alveolus surface area = 4p·r²
         </p>
@@ -106,9 +106,13 @@ export default function MedicineExhibit() {
 
 function Row({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-      <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span style={{ fontFamily: 'monospace' }}>{value}</span>
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+      background: 'var(--bg-glass)', border: '1px solid var(--border-glass)',
+    }}>
+      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 600 }}>{value}</span>
     </div>
   );
 }

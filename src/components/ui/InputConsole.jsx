@@ -36,39 +36,43 @@ export default function InputConsole() {
 
   return (
     <div className="glass" style={styles.wrap}>
-      <label htmlFor="pi-input" style={styles.label}>New value of π</label>
+      <label htmlFor="pi-input" style={styles.label}>🔧 Rewrite the universe — new value of π</label>
       <div style={styles.row}>
         <input
           id="pi-input"
           value={rawInput}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && canSimulate && handleSimulate()}
-          placeholder="e.g. 22/7, sqrt(2), 2+3i, Infinity…"
+          placeholder="Try 22/7, sqrt(2), 2+3i, or Infinity…"
           style={styles.input}
           spellCheck={false}
           autoComplete="off"
         />
         <button onClick={handleSimulate} disabled={simulating || !canSimulate} style={styles.simulateBtn}>
-          {simulating ? 'Simulating…' : 'Simulate'}
+          {simulating ? '⏳ Simulating…' : '▶ Simulate'}
         </button>
       </div>
 
       <div style={styles.previewRow} aria-live="polite">
         {preview.kind === 'invalid' ? (
-          <span style={{ color: 'var(--danger)' }}>Could not resolve that expression.</span>
+          <span style={{ color: 'var(--danger)' }}>🤔 Hmm, I couldn't make sense of that — try one of the presets below.</span>
         ) : preview.kind === 'pending' ? (
           <span style={{ color: 'var(--text-secondary)' }}>Resolving…</span>
         ) : (
           <span>
-            Resolves to <strong style={{ color: 'var(--accent)' }}>{preview.normalized}</strong>
-            {preview.kind === 'complex' && <span style={{ color: 'var(--text-secondary)' }}> — activates Complex Geometry mode</span>}
+            That's <strong style={{ color: 'var(--accent-2)' }}>{preview.normalized}</strong>
+            {preview.kind === 'complex' && <span style={{ color: 'var(--text-secondary)' }}> — a complex number! We'll switch to Complex Geometry mode ✨</span>}
           </span>
         )}
       </div>
 
       <div style={styles.chips}>
         {PRESETS.map((p) => (
-          <button key={p.value} style={styles.chip} onClick={() => setInput(p.value)}>
+          <button
+            key={p.value}
+            style={{ ...styles.chip, ...(rawInput === p.value ? styles.chipActive : {}) }}
+            onClick={() => setInput(p.value)}
+          >
             {p.label}
           </button>
         ))}
@@ -78,23 +82,27 @@ export default function InputConsole() {
 }
 
 const styles = {
-  wrap: { padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '12px' },
-  label: { fontSize: '11px', letterSpacing: '0.15em', color: 'var(--text-secondary)' },
+  wrap: { padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '14px' },
+  label: { fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' },
   row: { display: 'flex', gap: '10px' },
   input: {
-    flex: 1, padding: '12px 14px', borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.03)',
-    color: 'var(--text-primary)', fontSize: '15px', fontFamily: 'monospace',
+    flex: 1, padding: '14px 16px', borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.04)',
+    color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-display)',
   },
   simulateBtn: {
-    padding: '12px 22px', borderRadius: 'var(--radius-sm)', border: 'none',
-    background: 'var(--accent)', color: '#0a0a10', fontWeight: 600, fontSize: '14px',
+    padding: '14px 26px', borderRadius: 'var(--radius-sm)', border: 'none',
+    background: 'linear-gradient(120deg, var(--accent), var(--accent-2))',
+    color: '#0a0a10', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap',
   },
   previewRow: { fontSize: '13px', color: 'var(--text-secondary)' },
-  chips: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' },
+  chips: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '2px' },
   chip: {
-    padding: '6px 12px', fontSize: '12px', borderRadius: '999px',
+    padding: '7px 14px', fontSize: '12px', fontWeight: 500, borderRadius: '999px',
     border: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.03)',
     color: 'var(--text-secondary)',
+  },
+  chipActive: {
+    background: 'rgba(139,124,255,0.18)', borderColor: 'var(--accent)', color: 'var(--text-primary)',
   },
 };

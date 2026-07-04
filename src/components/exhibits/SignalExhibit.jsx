@@ -64,7 +64,7 @@ export default function SignalExhibit() {
       </div>
 
       <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>Signal &amp; Acoustics</h3>
+        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>🔊 Signal &amp; Acoustics</h3>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
           Angular frequency ω = 2p·f &nbsp;·&nbsp; Intensity I = Power / (4p·r²)
         </p>

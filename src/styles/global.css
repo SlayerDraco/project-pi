@@ -1,19 +1,23 @@
 :root {
-  --bg-void: #060608;
-  --bg-panel: #0d0e12;
-  --bg-glass: rgba(255, 255, 255, 0.04);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --text-primary: #f4f4f6;
-  --text-secondary: #9a9aa5;
-  --accent: #7c9eff;
+  --bg-void: #08060f;
+  --bg-panel: #100c1c;
+  --bg-glass: rgba(255, 255, 255, 0.045);
+  --bg-glass-strong: rgba(255, 255, 255, 0.07);
+  --border-glass: rgba(255, 255, 255, 0.09);
+  --text-primary: #f6f5fa;
+  --text-secondary: #a5a1b8;
+  --text-tertiary: #716d87;
+  --accent: #8b7cff;
+  --accent-2: #ff7ce0;
   --accent-warm: #ffb37c;
   --danger: #ff6b6b;
-  --success: #6bffb0;
+  --success: #5ce6a6;
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
-  --radius-lg: 24px;
-  --radius-md: 14px;
-  --radius-sm: 8px;
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --shadow-glow: 0 0 60px rgba(139, 124, 255, 0.15);
 }
 
 * { box-sizing: border-box; }
@@ -21,8 +25,13 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  height: 100%;
-  background: var(--bg-void);
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 1200px 800px at 15% -10%, rgba(139,124,255,0.16), transparent 60%),
+    radial-gradient(ellipse 1000px 700px at 90% 10%, rgba(255,124,224,0.10), transparent 55%),
+    radial-gradient(ellipse 900px 900px at 50% 100%, rgba(92,230,166,0.06), transparent 60%),
+    var(--bg-void);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -35,22 +44,19 @@ h1, h2, h3, .display {
 
 a, button { font-family: inherit; }
 
+button { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease; }
+button:active { transform: scale(0.97); }
+
 .glass {
-  background: var(--bg-glass);
+  background: linear-gradient(160deg, var(--bg-glass-strong), var(--bg-glass));
   border: 1px solid var(--border-glass);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
   border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35);
 }
 
-button {
-  cursor: pointer;
-}
-
-::selection {
-  background: var(--accent);
-  color: #060608;
-}
+::selection { background: var(--accent); color: #08060f; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -72,6 +78,106 @@ button {
 }
 
 /* -----------------------------------------------------------
+   Exhibit picker — colorful card grid, not technical pill nav
+----------------------------------------------------------- */
+.exhibit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.exhibit-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 16px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-glass);
+  text-align: left;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.exhibit-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(150deg, var(--card-color, var(--accent)) 0%, transparent 70%);
+  transition: opacity 0.25s ease;
+}
+
+.exhibit-card:hover::before,
+.exhibit-card.active::before {
+  opacity: 0.28;
+}
+
+.exhibit-card.active {
+  border-color: var(--card-color, var(--accent));
+  box-shadow: 0 0 0 1px var(--card-color, var(--accent)), 0 8px 24px rgba(0,0,0,0.35);
+}
+
+.exhibit-card:hover {
+  transform: translateY(-2px);
+}
+
+.exhibit-icon { font-size: 26px; line-height: 1; }
+.exhibit-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.exhibit-category {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+/* -----------------------------------------------------------
+   Stat cards — replaces monospace label/value rows everywhere
+----------------------------------------------------------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.stat-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-icon { font-size: 18px; }
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.4vw, 24px);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.stat-unit { font-size: 12px; color: var(--text-tertiary); font-weight: 400; margin-left: 4px; }
+.stat-sub { font-size: 11px; color: var(--text-tertiary); }
+
+.verdict-banner {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.verdict-banner.good { background: rgba(92,230,166,0.08); border: 1px solid rgba(92,230,166,0.3); }
+.verdict-banner.bad { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.3); }
+.verdict-icon { font-size: 20px; }
+
+/* -----------------------------------------------------------
    Mobile-first responsive overrides.
 ----------------------------------------------------------- */
 .grid-2col {
@@ -81,23 +187,12 @@ button {
 }
 
 @media (max-width: 760px) {
-  .grid-2col {
-    grid-template-columns: 1fr;
-  }
-
-  button {
-    min-height: 40px;
-  }
-
-  input#pi-input {
-    font-size: 16px !important; /* prevents iOS zoom-on-focus */
-  }
+  .grid-2col { grid-template-columns: 1fr; }
+  button { min-height: 40px; }
+  input#pi-input { font-size: 16px !important; }
+  .exhibit-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
 
 @media (max-width: 480px) {
-  h1.display {
-    font-size: 18px !important;
-  }
+  h1.display { font-size: 20px !important; }
 }
-
-

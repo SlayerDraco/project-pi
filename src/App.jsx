@@ -36,9 +36,14 @@ export default function App() {
       {galleryOpen && <AchievementGallery onClose={() => setGalleryOpen(false)} />}
 
       <header style={styles.header}>
-        <h1 className="display" style={{ fontSize: '22px', margin: 0 }}>
-          PROJECT <span style={{ color: 'var(--accent)' }}>π</span>
-        </h1>
+        <div>
+          <h1 className="display" style={{ fontSize: 'clamp(24px, 3vw, 32px)', margin: 0 }}>
+            PROJECT <span style={{ background: 'linear-gradient(120deg, var(--accent), var(--accent-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>π</span>
+          </h1>
+          <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            The science museum where you get to break reality.
+          </p>
+        </div>
         <div style={styles.headerActions}>
           {!tourActive && (
             <button onClick={() => setTourActive(true)} style={styles.tourBtn}>
@@ -55,24 +60,27 @@ export default function App() {
 
       {tourActive && <TourMode onExit={() => setTourActive(false)} />}
 
-      <nav style={styles.nav}>
+      <p style={{ fontSize: '11px', letterSpacing: '0.14em', color: 'var(--text-tertiary)', margin: '20px 0 10px', textTransform: 'uppercase' }}>
+        Pick an exhibit
+      </p>
+      <nav className="exhibit-grid" style={{ marginBottom: '18px' }}>
         {EXHIBITS.map((ex) => (
           <button
             key={ex.id}
             onClick={() => setActiveExhibitId(ex.id)}
-            style={{
-              ...styles.navBtn,
-              background: activeExhibitId === ex.id ? 'var(--accent)' : 'transparent',
-              color: activeExhibitId === ex.id ? '#0a0a10' : 'var(--text-secondary)',
-            }}
+            className={`exhibit-card ${activeExhibitId === ex.id ? 'active' : ''}`}
+            style={{ '--card-color': ex.color }}
+            aria-pressed={activeExhibitId === ex.id}
           >
-            {ex.label}
+            <span className="exhibit-icon">{ex.icon}</span>
+            <span className="exhibit-label">{ex.label}</span>
+            <span className="exhibit-category">{ex.category}</span>
           </button>
         ))}
       </nav>
 
-      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 24px' }}>
-        {exhibit.category} · {exhibit.description}
+      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 24px', maxWidth: '760px' }}>
+        {exhibit.description}
       </p>
 
       <div className="grid-2col" style={{ marginBottom: '24px' }}>
@@ -99,18 +107,16 @@ function ExhibitLoadingState() {
 
 const styles = {
   header: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: '16px', flexWrap: 'wrap', gap: '12px',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+    marginBottom: '4px', flexWrap: 'wrap', gap: '12px',
   },
   headerActions: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' },
   tourBtn: {
-    padding: '8px 14px', borderRadius: '999px', fontSize: '13px',
-    border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)',
+    padding: '9px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+    border: 'none', background: 'linear-gradient(120deg, var(--accent), var(--accent-2))', color: '#0a0a10',
   },
   achievementsBtn: {
-    padding: '8px 14px', borderRadius: '999px', fontSize: '13px',
-    border: '1px solid var(--border-glass)', background: 'transparent', color: 'var(--text-primary)',
+    padding: '9px 16px', borderRadius: '999px', fontSize: '13px',
+    border: '1px solid var(--border-glass)', background: 'var(--bg-glass)', color: 'var(--text-primary)',
   },
-  nav: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' },
-  navBtn: { padding: '8px 16px', borderRadius: '999px', fontSize: '13px', border: '1px solid var(--border-glass)' },
 };
