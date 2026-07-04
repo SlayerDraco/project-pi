@@ -1,31 +1,64 @@
 import { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Line } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 import { useRealityStore } from '../../state/useRealityStore.js';
 import CanvasErrorBoundary from '../ui/CanvasErrorBoundary.jsx';
 import ExhibitFrame from '../ui/ExhibitFrame.jsx';
 import DataTable from '../ui/DataTable.jsx';
-import { generateSphereGeometry, generateRingOutline, adaptiveSegments } from '../../engines/geometry/generateCircle.js';
+import { GlowFrame } from '../ui/SceneEffects.jsx';
+import Starfield from '../ui/Starfield.jsx';
+import { generateSphereGeometry, adaptiveSegments } from '../../engines/geometry/generateCircle.js';
+import { AccretionDisk } from '../../engines/astronomy/AccretionDisk.jsx';
 import { Astronomy } from '../../engines/math/formulas.js';
 import { REAL_PI } from '../../engines/math/parser.js';
+import { StatGrid, StatCard, VerdictBanner } from '../ui/StatCard.jsx';
 
-const SCHWARZSCHILD_DISPLAY_RADIUS = 1.2;
+const SCHWARZSCHILD_DISPLAY_RADIUS = 1.1;
 const SOLAR_MASS_KG = 1.989e30;
 
+const horizonVertex = /* glsl */ `
+  varying vec3 vNormal;
+  varying vec3 vViewPos;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vViewPos = mv.xyz;
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+const horizonFragment = /* glsl */ `
+  varying vec3 vNormal;
+  varying vec3 vViewPos;
+  void main() {
+    // Fresnel rim: near-black core, faint violet glow only at the silhouette edge —
+    // reads as "light bending around the horizon" rather than a flat matte ball.
+    float fresnel = pow(1.0 - abs(normalize(vViewPos).z * dot(normalize(vNormal), vec3(0.0,0.0,1.0))), 3.5);
+    vec3 rim = vec3(0.45, 0.32, 0.9) * fresnel;
+    gl_FragColor = vec4(rim, 1.0);
+  }
+`;
+
 function EventHorizon({ p }) {
-  const geo = useMemo(() => generateSphereGeometry(SCHWARZSCHILD_DISPLAY_RADIUS, p, adaptiveSegments(p, 48), adaptiveSegments(p, 32)), [p]);
+  const geo = useMemo(() => generateSphereGeometry(SCHWARZSCHILD_DISPLAY_RADIUS, p, adaptiveSegments(p, 64), adaptiveSegments(p, 48)), [p]);
   const ref = useRef();
-  useFrame((_, dt) => { if (ref.current) ref.current.rotation.y += dt * 0.1; });
+  useFrame((_, dt) => { if (ref.current) ref.current.rotation.y += dt * 0.06; });
   return (
     <mesh geometry={geo} ref={ref}>
-      <meshStandardMaterial color="#050508" roughness={0.9} emissive="#1a0a2e" emissiveIntensity={0.5} />
+      <shaderMaterial vertexShader={horizonVertex} fragmentShader={horizonFragment} />
     </mesh>
   );
 }
 
-function PhotonSphere({ p }) {
-  const ring = useMemo(() => generateRingOutline(SCHWARZSCHILD_DISPLAY_RADIUS * 1.5, p, 200), [p]);
-  return <Line points={ring} color="#ffb37c" lineWidth={1.5} transparent opacity={0.75} />;
+function PhotonRingGlow({ radius }) {
+  // A thin, additive-blended torus standing in for the photon ring's
+  // bright, lensed light — glows via bloom instead of a flat line.
+  return (
+    <mesh rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[radius, 0.012, 16, 128]} />
+      <meshBasicMaterial color="#ffe3b0" transparent opacity={0.9} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </mesh>
+  );
 }
 
 export default function BlackHoleExhibit() {
@@ -39,10 +72,11 @@ export default function BlackHoleExhibit() {
   const realHawkingTemp = Astronomy.hawkingTemperature(10 * SOLAR_MASS_KG, REAL_PI);
 
   const stable = Number.isFinite(p) && p > 1.5 && p < 6;
+  const photonRadius = Number.isFinite(photonCirc) ? Math.max(photonCirc / (2 * REAL_PI), SCHWARZSCHILD_DISPLAY_RADIUS * 1.05) : SCHWARZSCHILD_DISPLAY_RADIUS * 1.5;
 
   return (
     <section className="grid-2col">
-      <div className="glass" style={{ height: '420px', overflow: 'hidden' }}>
+      <div className="glass" style={{ height: '460px', overflow: 'hidden' }}>
         {parsed.kind === 'complex' ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '24px', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '360px' }}>
@@ -52,7 +86,7 @@ export default function BlackHoleExhibit() {
           </div>
         ) : (
           <ExhibitFrame
-            visualLabel={`A dark event horizon sphere surrounded by an orange photon-sphere ring, sized according to your pi value. The horizon and ring stay in ${stable ? 'a coherent proportion' : 'a broken proportion, with the ring either inside the horizon or impossibly far outside it'}.`}
+            visualLabel={`A glowing orange and white accretion disk swirling around a black event horizon with a violet rim glow, sized according to your pi value. The disk and photon ring stay in ${stable ? 'a coherent proportion' : 'a broken proportion'}.`}
             dataView={<DataTable caption="Black hole measurements at your current π" rows={[
               ['Horizon area vs. real', Number.isFinite(horizonArea) ? `${((horizonArea / realHorizonArea) * 100).toFixed(1)}%` : '—'],
               ['Photon sphere circumference', Number.isFinite(photonCirc) ? photonCirc.toFixed(3) : '—'],
@@ -61,55 +95,44 @@ export default function BlackHoleExhibit() {
             ]} />}
           >
             <CanvasErrorBoundary>
-              <Canvas camera={{ position: [0, 1.5, 5], fov: 45 }}>
-                <ambientLight intensity={0.15} />
-                <pointLight position={[4, 3, 4]} intensity={1.5} color="#7c9eff" />
-                <EventHorizon p={p} />
-                <PhotonSphere p={p} />
-                <OrbitControls enablePan={false} />
-              </Canvas>
+              <GlowFrame tint="rgba(255,190,130,0.18)">
+                <Canvas camera={{ position: [0, 1.8, 4.6], fov: 42 }} gl={{ antialias: true }}>
+                  <color attach="background" args={['#050308']} />
+                  <ambientLight intensity={0.06} />
+                  <Starfield count={800} radius={30} />
+                  <EventHorizon p={p} />
+                  {Number.isFinite(photonCirc) && (
+                    <>
+                      <AccretionDisk innerRadius={SCHWARZSCHILD_DISPLAY_RADIUS * 1.35} outerRadius={photonRadius * 2.6} />
+                      <PhotonRingGlow radius={photonRadius} />
+                    </>
+                  )}
+                  <OrbitControls enablePan={false} minDistance={2.5} maxDistance={9} />
+                </Canvas>
+              </GlowFrame>
             </CanvasErrorBoundary>
           </ExhibitFrame>
         )}
       </div>
 
-      <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 className="display" style={{ margin: 0, fontSize: '18px' }}>🕳️ Black Holes</h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-          A = 4p·r² &nbsp;·&nbsp; T = ħc³ / (8p·G·M·k<sub>B</sub>)
-        </p>
-        <Row label="Horizon area vs. real" value={Number.isFinite(horizonArea) ? `${((horizonArea / realHorizonArea) * 100).toFixed(1)}%` : '—'} />
-        <Row label="Photon sphere circumference" value={Number.isFinite(photonCirc) ? photonCirc.toFixed(3) : '—'} />
-        <Row label="Hawking temp (10 M☉)" value={Number.isFinite(hawkingTemp) ? `${(hawkingTemp * 1e9).toExponential(2)} nK` : '—'} />
-        <Row label="Real-π Hawking temp" value={`${(realHawkingTemp * 1e9).toExponential(2)} nK`} />
-        <div style={{
-          marginTop: '6px', padding: '12px 14px', borderRadius: 'var(--radius-sm)',
-          background: stable ? 'rgba(107,255,176,0.08)' : 'rgba(255,107,107,0.08)',
-          border: `1px solid ${stable ? 'rgba(107,255,176,0.3)' : 'rgba(255,107,107,0.3)'}`,
-        }}>
-          <strong style={{ fontSize: '13px', color: stable ? 'var(--success)' : 'var(--danger)' }}>
-            {stable ? '✓ Horizon geometry remains coherent' : '✕ Horizon geometry breaks down'}
-          </strong>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '6px 0 0' }}>
-            {stable
-              ? 'The event horizon and photon sphere stay in a sensible relative proportion — a self-consistent alternate general relativity could plausibly define black holes this way.'
-              : 'The photon sphere either collapses inside the horizon or flies impossibly far outside it — this exact geometric relationship could not describe a real black hole in a universe built on our physics.'}
+      <div className="glass" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <h3 className="display" style={{ margin: 0, fontSize: '19px' }}>🕳️ Black Holes</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
+            A = 4p·r² &nbsp;·&nbsp; T = ħc³ / (8p·G·M·k<sub>B</sub>)
           </p>
         </div>
+        <StatGrid>
+          <StatCard icon="🌑" label="Horizon area" value={Number.isFinite(horizonArea) ? `${((horizonArea / realHorizonArea) * 100).toFixed(0)}%` : '—'} sub="vs. real" />
+          <StatCard icon="💫" label="Photon sphere" value={Number.isFinite(photonCirc) ? photonCirc.toFixed(2) : '—'} unit="units" />
+          <StatCard icon="🌡️" label="Hawking temp" value={Number.isFinite(hawkingTemp) ? (hawkingTemp * 1e9).toExponential(1) : '—'} unit="nK" />
+        </StatGrid>
+        <VerdictBanner good={stable} title={stable ? 'Horizon geometry remains coherent' : 'Horizon geometry breaks down'}>
+          {stable
+            ? 'The event horizon and photon sphere stay in a sensible relative proportion — a self-consistent alternate general relativity could plausibly define black holes this way.'
+            : 'The photon sphere either collapses inside the horizon or flies impossibly far outside it — this exact geometric relationship could not describe a real black hole in a universe built on our physics.'}
+        </VerdictBanner>
       </div>
     </section>
-  );
-}
-
-function Row({ label, value }) {
-  return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '10px 14px', borderRadius: 'var(--radius-sm)',
-      background: 'var(--bg-glass)', border: '1px solid var(--border-glass)',
-    }}>
-      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 600 }}>{value}</span>
-    </div>
   );
 }
